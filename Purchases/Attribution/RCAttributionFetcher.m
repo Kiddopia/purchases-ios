@@ -47,16 +47,6 @@ static NSMutableArray<RCAttributionData *> *_Nullable postponedAttributionData;
 }
 
 - (nullable NSString *)identifierForAdvertisers {
-    if (@available(iOS 6.0, macOS 10.14, *)) {
-        Class <FakeASIdManager> _Nullable asIdentifierManagerClass = [self.attributionFactory asIdClass];
-        if (asIdentifierManagerClass) {
-            id sharedManager = [asIdentifierManagerClass sharedManager];
-            NSUUID *identifierValue = [sharedManager valueForKey:[self.attributionFactory asIdentifierPropertyName]];
-            return identifierValue.UUIDString;
-        } else {
-            RCWarnLog(@"%@", RCStrings.configure.adsupport_not_imported);
-        }
-    }
     return nil;
 }
 
@@ -81,47 +71,7 @@ static NSMutableArray<RCAttributionData *> *_Nullable postponedAttributionData;
 }
 
 - (BOOL)isAuthorizedToPostSearchAds {
-#if APP_TRACKING_TRANSPARENCY_REQUIRED
-    if (@available(iOS 14, macos 11, tvos 14, *)) {
-        NSOperatingSystemVersion minimumOSVersionRequiringAuthorization = { .majorVersion = 14, .minorVersion = 5, .patchVersion = 0 };
-
-        BOOL needsTrackingAuthorization = [self.systemInfo isOperatingSystemAtLeastVersion:minimumOSVersionRequiringAuthorization];
-
-        Class _Nullable trackingManagerClass = [self.attributionFactory atFollowingClass];
-        if (!trackingManagerClass) {
-            if (needsTrackingAuthorization) {
-                RCWarnLog(@"%@", RCStrings.attribution.search_ads_attribution_cancelled_missing_att_framework);
-            }
-            return !needsTrackingAuthorization;
-        }
-        SEL authStatusSelector = NSSelectorFromString(self.attributionFactory.authorizationStatusPropertyName);
-        BOOL canPerformSelector = [trackingManagerClass respondsToSelector:authStatusSelector];
-        if (!canPerformSelector) {
-            RCWarnLog(@"%@", RCStrings.attribution.att_framework_present_but_couldnt_call_tracking_authorization_status);
-            return NO;
-        }
-        // we use NSInvocation to prevent direct references to tracking frameworks, which cause issues for
-        // kids apps when going through app review, even if they don't actually use them at all. 
-        NSMethodSignature *methodSignature = [trackingManagerClass methodSignatureForSelector:authStatusSelector];
-        NSInvocation *myInvocation = [NSInvocation invocationWithMethodSignature:methodSignature];
-        [myInvocation setTarget:trackingManagerClass];
-        [myInvocation setSelector:authStatusSelector];
-
-        [myInvocation invoke];
-        NSInteger authorizationStatus;
-        [myInvocation getReturnValue:&authorizationStatus];
-
-        BOOL authorized = authorizationStatus == FakeTrackingManagerAuthorizationStatusAuthorized
-                          || (!needsTrackingAuthorization
-                              && authorizationStatus == FakeTrackingManagerAuthorizationStatusNotDetermined);
-        if (!authorized) {
-            RCLog(@"%@", RCStrings.attribution.search_ads_attribution_cancelled_not_authorized);
-            return NO;
-        }
-
-    }
-#endif
-    return YES;
+    return NO;
 }
 
 @end
