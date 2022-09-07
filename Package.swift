@@ -1,52 +1,41 @@
-// swift-tools-version:5.1
+// swift-tools-version:5.5
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 import class Foundation.ProcessInfo
 
 func resolveTargets() -> [Target] {
-    let objcSources = ["Purchases/Info.plist",
-                       "Purchases/Attribution",
-                       "Purchases/Caching",
-                       "Purchases/FoundationExtensions",
-                       "Purchases/Misc",
-                       "Purchases/Logging",
-                       "Purchases/Networking",
-                       "Purchases/Public",
-                       "Purchases/Purchasing",
-                       "Purchases/ProtectedExtensions",
-                       "Purchases/SubscriberAttributes",
-                       "Purchases/Identity"]
-    let infoPlist = "Purchases/Info.plist"
-
     let baseTargets: [Target] = [
-        .target(name: "Purchases",
-                dependencies: ["PurchasesCoreSwift"],
-                path: ".",
-                exclude: [infoPlist],
-                sources: ["Purchases"],
-                publicHeadersPath: "Purchases/Public",
-                cSettings: objcSources.map { CSetting.headerSearchPath($0) } + [
-                    .define("NS_BLOCK_ASSERTIONS", to: "1", .when(configuration: .release))
-                ]
-        ),
-        .target(name: "PurchasesCoreSwift",
-                dependencies: [],
-                path: ".",
-                sources: ["PurchasesCoreSwift"])]
+        .target(name: "RevenueCat",
+                path: "Sources",
+                exclude: ["Info.plist"])
+    ]
 
     return baseTargets
 }
 
+// Only add DocC Plugin when building docs, so that clients of this library won't
+// unnecessarily also get the DocC Plugin
+let environmentVariables = ProcessInfo.processInfo.environment
+let shouldIncludeDocCPlugin = environmentVariables["INCLUDE_DOCC_PLUGIN"] == "true"
+
+var dependencies: [Package.Dependency] = []
+if shouldIncludeDocCPlugin {
+    dependencies.append(.package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"))
+}
+
 let package = Package(
-    name: "Purchases",
+    name: "RevenueCat",
     platforms: [
-        .macOS(.v10_12), .iOS(.v9), .watchOS("6.2"), .tvOS(.v9)
+        .macOS(.v10_13),
+        .watchOS("6.2"),
+        .tvOS(.v11),
+        .iOS(.v11)
     ],
     products: [
-        .library(name: "Purchases",
-                 targets: ["Purchases"]),
+        .library(name: "RevenueCat",
+                 targets: ["RevenueCat"])
     ],
-    dependencies: [],
+    dependencies: dependencies,
     targets: resolveTargets()
 )

@@ -6,7 +6,7 @@
 //
 
 import UIKit
-import Purchases
+import RevenueCat
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -14,20 +14,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
         /* Enable debug logs before calling `configure`. */
-        Purchases.debugLogsEnabled = true
+        Purchases.logLevel = .debug
 
         /*
          Initialize the RevenueCat Purchases SDK.
          
-            - appUserID is nil, so an anonymous ID will be generated automatically by the Purchases SDK. Read more about Identifying Users here: https://docs.revenuecat.com/docs/user-ids
+            - `appUserID` is nil by default, so an anonymous ID will be generated automatically by the Purchases SDK.
+                Read more about Identifying Users here: https://docs.revenuecat.com/docs/user-ids
          
-            - observerMode is false, so Purchases will automatically handle finishing transactions. Read more about Observer Mode here: https://docs.revenuecat.com/docs/observer-mode
+            - `observerMode` is false by default, so Purchases will automatically handle finishing transactions.
+                Read more about Observer Mode here: https://docs.revenuecat.com/docs/observer-mode
          */
-        
-        Purchases.configure(withAPIKey: Constants.apiKey,
-                            appUserID: nil,
-                            observerMode: false)
-        
+
+        Purchases.configure(
+            with: Configuration.Builder(withAPIKey: Constants.apiKey)
+                .with(usesStoreKit2IfAvailable: true)
+                .build()
+        )
+
         /// - Set the delegate to this instance of AppDelegate. Scroll down to see this implementation.
         Purchases.shared.delegate = self
         
@@ -52,8 +56,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 extension AppDelegate: PurchasesDelegate {
     
     /// -  Whenever the `shared` instance of Purchases updates the PurchaserInfo cache, this method will be called.
-    func purchases(_ purchases: Purchases, didReceiveUpdated purchaserInfo: Purchases.PurchaserInfo) {
+    func purchases(_ purchases: Purchases, receivedUpdated customerInfo: CustomerInfo) {
         /// - If necessary, refresh app UI from updated PurchaserInfo
     }
-    
+
 }

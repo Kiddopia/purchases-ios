@@ -6,7 +6,7 @@
 //
 
 import UIKit
-import Purchases
+import RevenueCat
 
 /*
  View controller to display user's details like subscription status and ID's.
@@ -34,7 +34,7 @@ class UserViewController: UIViewController {
             self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Log Out", style: .done, target: self, action: #selector(logout))
         }
         
-        Purchases.shared.purchaserInfo { (purchaserInfo, error) in
+        Purchases.shared.getCustomerInfo { (purchaserInfo, error) in
             if purchaserInfo?.entitlements[Constants.entitlementID]?.isActive == true {
                 self.statusLabel.text = "Active"
                 self.statusLabel.textColor = .green
@@ -112,7 +112,7 @@ extension UserViewController {
     /// - Restore purchases method
     @IBAction
     func restorePurchases() {
-        Purchases.shared.restoreTransactions { (purchaserInfo, error) in
+        Purchases.shared.restorePurchases { (purchaserInfo, error) in
             if let error = error {
                 self.present(UIAlertController.errorAlert(message: error.localizedDescription), animated: true, completion: nil)
             }

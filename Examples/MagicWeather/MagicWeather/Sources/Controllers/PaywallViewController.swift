@@ -5,8 +5,9 @@
 //  Created by Cody Kerns on 12/22/20.
 //
 
+import StoreKit
 import UIKit
-import Purchases
+import RevenueCat
 
 /*
  An example paywall that uses the current offering.
@@ -16,13 +17,13 @@ import Purchases
 class PaywallViewController: UITableViewController {
 
     /// - Store the offering being displayed
-    var offering: Purchases.Offering?
+    var offering: Offering?
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
         /// - Load offerings when the paywall is displayed
-        Purchases.shared.offerings { (offerings, error) in
+        Purchases.shared.getOfferings { (offerings, error) in
             
             /// - If we have an error fetching offerings here, we'll print it out. You'll want to handle this case by either retrying, or letting your users know offerings weren't able to be fetched.
             if let error = error {
@@ -58,15 +59,15 @@ class PaywallViewController: UITableViewController {
         
         /// - Configure the PackageCell to display the appropriate name, pricing, and terms
         if let package = self.offering?.availablePackages[indexPath.row] {
-            cell.packageTitleLabel.text = package.product.localizedTitle
+            cell.packageTitleLabel.text = package.storeProduct.localizedTitle
             cell.packagePriceLabel.text = package.localizedPriceString
             
-            if let intro = package.product.introductoryPrice {
-                if intro.price == 0 {
-                    cell.packageTermsLabel.text = "\(intro.subscriptionPeriod.periodTitle()) free trial"
-                } else {
-                    cell.packageTermsLabel.text = "\(package.localizedIntroductoryPriceString) for \(intro.subscriptionPeriod.periodTitle())"
-                }
+            if let intro = package.storeProduct.introductoryDiscount {
+                let packageTermsLabelText = intro.price == 0
+                ? "\(intro.subscriptionPeriod.periodTitle()) free trial"
+                : "\(package.localizedIntroductoryPriceString!) for \(intro.subscriptionPeriod.periodTitle())"
+
+                cell.packageTermsLabel.text = packageTermsLabelText
             } else {
                 cell.packageTermsLabel.text = "Unlocks Premium"
             }
@@ -80,7 +81,7 @@ class PaywallViewController: UITableViewController {
         
         /// - Find the package being selected, and purchase it
         if let package = self.offering?.availablePackages[indexPath.row] {
-            Purchases.shared.purchasePackage(package) { (transaction, purchaserInfo, error, userCancelled) in
+            Purchases.shared.purchase(package: package) { (transaction, purchaserInfo, error, userCancelled) in
                 if let error = error {
                     self.present(UIAlertController.errorAlert(message: error.localizedDescription), animated: true, completion: nil)
                 } else {
@@ -96,7 +97,7 @@ class PaywallViewController: UITableViewController {
 
 /* Some methods to make displaying subscription terms easier */
 
-extension SKProductSubscriptionPeriod {
+extension SubscriptionPeriod {
     var durationTitle: String {
         switch self.unit {
         case .day: return "day"
@@ -108,8 +109,8 @@ extension SKProductSubscriptionPeriod {
     }
     
     func periodTitle() -> String {
-        let periodString = "\(self.numberOfUnits) \(self.durationTitle)"
-        let pluralized = self.numberOfUnits > 1 ?  periodString + "s" : periodString
+        let periodString = "\(self.value) \(self.durationTitle)"
+        let pluralized = self.value > 1 ?  periodString + "s" : periodString
         return pluralized
     }
 }
